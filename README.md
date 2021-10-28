@@ -1,2 +1,2 @@
 # CapstoneCloud
-Repository for any and all code written for our Capstone project.
+Repository for any scripts or code written for our Capstone project.

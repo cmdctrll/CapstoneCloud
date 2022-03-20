@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loadbalancededemo
+  namespace: default
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: loadbalancedemo
+  template:
+    metadata:
+      labels:
+        app: loadbalancedemo
+    spec:
+      containers:
+        - name: loadbalancedemo
+          image: bashofmann/rancher-demo:1.0.0
+          imagePullPolicy: Always
+          ports:
+          - containerPort: 8080
+            name: web
+            protocol: TCP
+          env:
+            - name: COW_COLOR
+              value: green
+          readinessProbe:
+            httpGet:
+              port: web
+              path: /

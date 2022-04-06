@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextcloud-server
+  namespace: nextcloud
+  labels:
+    app: nextcloud
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      pod-label: nextcloud-server
+  template:
+    metadata:
+      labels:
+        pod-label: nextcloud-server
+    spec:
+      containers:
+      - name: nextcloud
+        image: nextcloud:16-apache
+        volumeMounts:
+        - name: server-storage
+          mountPath: /var/www/html
+          subPath: server-data
+      volumes:
+      - name: server-storage
+        persistentVolumeClaim:
+          claimName: nextcloud-pv-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nextcloud-server
+  namespace: nextcloud
+  labels:
+    app: nextcloud
+spec:
+  selector:
+    pod-label: nextcloud-server
+  ports:
+  - protocol: TCP
+    port: 80
+  type: NodePort
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nextcloud-server
+  namespace: nextcloud
+spec:
+  rules:
+    - host: thecapstonecloud.com
+      http:
+        paths:
+          - path: /cloud
+            pathType: Prefix
+            backend:
+              service:
+                name: nextcloud-server
+                port:
+                  number: 80

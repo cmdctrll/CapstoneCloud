@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nextcloud-pv-claim
+  namespace: nextcloud
+  labels:
+    app: nextcloud
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextcloud-maria
+  namespace: nextcloud
+  labels:
+    app: nextcloud
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      pod-label: nextcloud-db
+  template:
+    metadata:
+      labels:
+        pod-label: nextcloud-db
+    spec:
+      containers:
+        - name: mysql
+          image: tobi312/rpi-mariadb:10.3
+          env:
+          - name: MYSQL_DATABASE
+            value: nextcloud
+          envFrom:
+          - secretRef:
+              name: nextcloud-secret
+          volumeMounts:
+          - name: db-storage
+            mountPath: /var/lib/mysql
+            subPath: mysql-data
+      volumes:
+      - name: db-storage
+        persistentVolumeClaim:
+          claimName: nextcloud-pv-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nextcloud-maria
+  namespace: nextcloud
+  labels:
+    app: nextcloud
+spec:
+  selector:
+    pod-label: nextcloud-db
+  ports:
+    - protocol: TCP
+      port: 3306
